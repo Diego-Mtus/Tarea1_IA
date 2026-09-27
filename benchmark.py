@@ -1,23 +1,23 @@
 import csv
 import numpy as np
 from main import Simulation
+from genetic import GeneticAlgorithm
 
-# Esto va a ser para ejecutar el benchmark sin lo visual, para q sea más rápido.
 def run_headless_benchmark():
-
-    # Definir los mapas a evaluar
+    # Incluimos el Genético en la lista de algoritmos a evaluar
     mapas = ["mapa1.txt"] 
-    algoritmos = ["BFS", "Dijkstra", "A*", "Greedy"]
+    algoritmos = ["BFS", "Dijkstra", "A*", "Greedy", "Genetic"]
     num_iterations = 200  
     max_turns = 500
+    k_fire_turns = 3
     
     csv_filename = "resultados_benchmark.csv"
 
-    print("= Iniciando benchmark=\n")
+    print("=== Iniciando Benchmark Headless ===\n")
 
     with open(csv_filename, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        # Encabezados para las métricas obligatorias
+        # Encabezados para las métricas obligatorias según la pauta
         writer.writerow(["Mapa", "Algoritmo", "Iteracion", "Turnos_Despeje", "Evacuados", "Fallecidos", "Tasa_Supervivencia"])
 
         for mapa in mapas:
@@ -29,34 +29,60 @@ def run_headless_benchmark():
 
                 for i in range(1, num_iterations + 1):
 
-                    sim = Simulation(filepath=mapa, algorithm=algo, k_fire_turns=3)
-                    sim.randomize_agents() # Aleatorizar posiciones
-                    while sim.agents and sim.turn < max_turns:
-                        sim.step() # Se hacen los pasos sin draw
+                    if algo == "Genetic":
+                        # Instanciamos el Algoritmo Genético para esta iteración
+                        # Ajustamos a 60 individuos y 80 generaciones para equilibrar precisión y tiempo
+                        ga = GeneticAlgorithm(
+                            filepath=mapa, 
+                            pop_size=60, 
+                            chromosome_len=150, 
+                            generations=80, 
+                            k_fire_turns=k_fire_turns
+                        )
+                        # Reubicamos los agentes para cumplir con la variación estocástica de la Opción A
+                        ga.set_random_agents()
 
-                    # Metricas de supervivencia
-                    tasa_supervivencia = (sim.escaped / sim.total_agents * 100) if sim.total_agents > 0 else 0.0
+                        # Ejecutamos la metaheurística sin mensajes detallados
+                        _, stats = ga.run(verbose=False)
 
-                    # Guardar resultados
+                        turnos_despeje = stats["turnos_despeje"]
+                        evacuados = stats["evacuados"]
+                        fallecidos = stats["fallecidos"]
+                        tasa_supervivencia = stats["tasa_supervivencia"]
+
+                    else:
+                        # BFS, Dijkstra, A*, Greedy
+                        sim = Simulation(filepath=mapa, algorithm=algo, k_fire_turns=k_fire_turns)
+                        sim.randomize_agents()
+
+                        while sim.agents and sim.turn < max_turns:
+                            sim.step()
+
+                        turnos_despeje = sim.turn
+                        evacuados = sim.escaped
+                        fallecidos = sim.deaths
+                        tasa_supervivencia = (sim.escaped / sim.total_agents * 100) if sim.total_agents > 0 else 0.0
+
+                    # Guardar fila de resultados en el CSV
                     writer.writerow([
                         mapa, algo, i, 
-                        sim.turn, 
-                        sim.escaped, 
-                        sim.deaths, 
+                        turnos_despeje, 
+                        evacuados, 
+                        fallecidos, 
                         f"{tasa_supervivencia:.2f}"
                     ])
 
-                    turnos_list.append(sim.turn)
+                    turnos_list.append(turnos_despeje)
                     supervivencia_list.append(tasa_supervivencia)
 
-                    if i % 10 == 0:
-                        print(f" [Iteración {i}/{num_iterations}]")
+                    if i % 20 == 0:
+                        print(f"  [Iteración {i}/{num_iterations} completada]")
 
+                # Resumen descriptivo por consola al terminar cada algoritmo
+                print(f"--> Tasa Supervivencia Media ({algo}): {np.mean(supervivencia_list):.2f}%")
+                print(f"--> Turnos Despeje -> Media: {np.mean(turnos_list):.2f} | Desv.Est: {np.std(turnos_list):.2f} | Mín: {np.min(turnos_list)} | Máx: {np.max(turnos_list)}\n")
 
-                print(f"Tasa Supervivencia Media: {np.mean(supervivencia_list):.2f}%")
-                print(f"Turnos Despeje -> Media: {np.mean(turnos_list):.2f} | Desv.Est: {np.std(turnos_list):.2f} | Mín: {np.min(turnos_list)} | Máx: {np.max(turnos_list)}\n")
-
-    print(f"Datos exportados a '{csv_filename}'.")
+    print(f"Benchmark finalizado. Todos los datos fueron exportados a '{csv_filename}'.")
 
 if __name__ == "__main__":
     run_headless_benchmark()
