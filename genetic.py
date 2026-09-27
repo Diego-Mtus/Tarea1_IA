@@ -209,7 +209,9 @@ class GeneticAlgorithm:
             # Elitismo
             new_population = [copy.deepcopy(best_overall)]
 
+            # Torneo
             while len(new_population) < self.pop_size:
+                # Elige dos padres mediante selección por torneo
                 p1 = self.selection(population, fitnesses)
                 p2 = self.selection(population, fitnesses)
                 c1, c2 = self.crossover(p1, p2)

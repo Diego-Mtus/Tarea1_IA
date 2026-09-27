@@ -48,3 +48,10 @@ El cual realiza 160 iteraciones de cada prueba, y lo obtenido se almacena en `re
    ```bash
       py generar_graficos.py
    ```
+
+Además, se puede ver el comportamiento generación por generación del algoritmo genético ejecutando
+   ```bash
+      py test_genetic.py
+   ```
+
+
