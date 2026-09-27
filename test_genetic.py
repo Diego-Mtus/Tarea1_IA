@@ -1,7 +1,7 @@
 from genetic import GeneticAlgorithm
 
 def main():
-    print("=== TEST INDIVIDUAL: ALGORITMO GENÉTICO GENERAL ===")
+    
     ga = GeneticAlgorithm(filepath="mapa1.txt", pop_size=100, generations=100, k_fire_turns=3)
     best_policy, stats = ga.run(verbose=True)
 
