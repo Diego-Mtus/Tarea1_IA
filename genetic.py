@@ -3,7 +3,7 @@ import copy
 import os
 from collections import deque
 
-ACTIONS = [0, 1, 2, 3, 4] # 0: Esperar, 1: Arriba, 2: Abajo, 3: Izquierda, 4: Derecha
+ACTIONS = [0, 1, 2, 3, 4]
 DIR_MAP = {
     0: (0, 0),   # Esperar
     1: (-1, 0),  # Arriba
@@ -15,12 +15,10 @@ DIR_MAP = {
 GRID_WIDTH = 30
 GRID_HEIGHT = 20
 
+
+# El cromosoma es la lista de instrucciones de movimiento para todo el grupo.
 class GeneticAlgorithm:
-    """
-    Algoritmo Genético Simplificado:
-    El cromosoma es una LISTA SIMPLE de instrucciones de movimiento turno a turno
-    para todo el grupo. La inicialización es 100% aleatoria (imparcial).
-    """
+
     def __init__(self, filepath="mapa1.txt", pop_size=80, chromosome_len=150, generations=100, k_fire_turns=4):
         self.filepath = filepath
         self.pop_size = pop_size # Tamaño de la población
@@ -58,6 +56,8 @@ class GeneticAlgorithm:
 
         return grid, agents, exit_pos
 
+    # Para el fitness, usamos bfs para calcular la distancia mínima a la salida desde cada celda
+    # Porque manhattan no es suficiente en presencia de muros y fuego
     def bfs_distance_map(self):
         """Calcula la distancia mínima por pasillos libres a la salida."""
         dist_map = [[999 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
@@ -167,14 +167,16 @@ class GeneticAlgorithm:
         fitness = (escaped * 1000000) + progress_score - (deaths * 5000) - (final_dist_penalty * 100)
         return fitness, escaped, deaths, turn
 
+    # Selección por torneo de 4 individuos.
+    # El mejor de los 4 es elegido como padre.
     def selection(self, population, fitnesses):
-        """Selección por torneo."""
+ 
         tournament = random.sample(list(zip(population, fitnesses)), k=4)
         tournament.sort(key=lambda x: x[1], reverse=True)
         return copy.deepcopy(tournament[0][0])
 
+    # Se escoge un punto de cruce aleatorio y se intercambian los genes de los padres.
     def crossover(self, parent1, parent2):
-        """Cruce simple en un punto para listas."""
         if random.random() < 0.85:
             point = random.randint(1, self.chromosome_len - 1)
             child1 = parent1[:point] + parent2[point:]
@@ -182,8 +184,8 @@ class GeneticAlgorithm:
             return child1, child2
         return copy.deepcopy(parent1), copy.deepcopy(parent2)
 
+    # Cada gen tiene una probabilidad de mutar a un movimiento aleatorio.
     def mutate(self, individual, mutation_rate=0.08):
-        """Mutación puntual simple en la lista de instrucciones."""
         for i in range(len(individual)):
             if random.random() < mutation_rate:
                 individual[i] = random.choice(ACTIONS)

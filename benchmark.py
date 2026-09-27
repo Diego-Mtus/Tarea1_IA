@@ -4,20 +4,20 @@ from main import Simulation
 from genetic import GeneticAlgorithm
 
 def run_headless_benchmark():
-    # Incluimos el Genético en la lista de algoritmos a evaluar
-    mapas = ["mapa1.txt"] 
+
+    mapas = ["mapa1.txt", "mapa2.txt", "mapa3.txt"] 
     algoritmos = ["BFS", "Dijkstra", "A*", "Greedy", "Genetic"]
-    num_iterations = 200  
+    num_iterations = 160  
     max_turns = 500
     k_fire_turns = 3
     
     csv_filename = "resultados_benchmark.csv"
 
-    print("=== Iniciando Benchmark Headless ===\n")
+    print("=== Iniciando Benchmark ===\n")
 
     with open(csv_filename, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        # Encabezados para las métricas obligatorias según la pauta
+        # Encabezados
         writer.writerow(["Mapa", "Algoritmo", "Iteracion", "Turnos_Despeje", "Evacuados", "Fallecidos", "Tasa_Supervivencia"])
 
         for mapa in mapas:
@@ -30,8 +30,7 @@ def run_headless_benchmark():
                 for i in range(1, num_iterations + 1):
 
                     if algo == "Genetic":
-                        # Instanciamos el Algoritmo Genético para esta iteración
-                        # Ajustamos a 60 individuos y 80 generaciones para equilibrar precisión y tiempo
+
                         ga = GeneticAlgorithm(
                             filepath=mapa, 
                             pop_size=60, 
@@ -39,10 +38,10 @@ def run_headless_benchmark():
                             generations=80, 
                             k_fire_turns=k_fire_turns
                         )
-                        # Reubicamos los agentes para cumplir con la variación estocástica de la Opción A
+
                         ga.set_random_agents()
 
-                        # Ejecutamos la metaheurística sin mensajes detallados
+
                         _, stats = ga.run(verbose=False)
 
                         turnos_despeje = stats["turnos_despeje"]
@@ -78,7 +77,7 @@ def run_headless_benchmark():
                     if i % 20 == 0:
                         print(f"  [Iteración {i}/{num_iterations} completada]")
 
-                # Resumen descriptivo por consola al terminar cada algoritmo
+                # Resumen
                 print(f"--> Tasa Supervivencia Media ({algo}): {np.mean(supervivencia_list):.2f}%")
                 print(f"--> Turnos Despeje -> Media: {np.mean(turnos_list):.2f} | Desv.Est: {np.std(turnos_list):.2f} | Mín: {np.min(turnos_list)} | Máx: {np.max(turnos_list)}\n")
 

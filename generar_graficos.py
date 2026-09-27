@@ -64,7 +64,7 @@ def generate_benchmark_charts(csv_file="resultados_benchmark.csv"):
         width=0.4,
         boxprops=dict(alpha=0.8)
     )
-    plt.title("Distribución de Turnos de Despeje (200 Iteraciones)", fontsize=14, fontweight="bold", pad=15)
+    plt.title("Distribución de Turnos de Despeje", fontsize=14, fontweight="bold", pad=15)
     plt.xlabel("Algoritmo de Búsqueda", labelpad=10)
     plt.ylabel("Turnos de Despeje", labelpad=10)
 
@@ -110,7 +110,60 @@ def generate_benchmark_charts(csv_file="resultados_benchmark.csv"):
     plt.close()
     print(f" Guardado: {chart3_path}")
 
-    print("\n🎉 Todos los gráficos han sido generados exitosamente en alta resolución (300 DPI).")
+    # ==========================================
+    # TABLA ESTADÍSTICA: Descriptivos de Turnos de Despeje
+    # ==========================================
+
+    stats_df = df.groupby(["Mapa", "Algoritmo"])["Turnos_Despeje"].agg(
+        Media='mean',
+        Desviacion_Estandar='std',
+        Minimo='min',
+        Maximo='max'
+    ).reset_index()
+
+    # Redondear números
+    stats_df['Media'] = stats_df['Media'].round(2)
+    stats_df['Desviacion_Estandar'] = stats_df['Desviacion_Estandar'].round(2)
+
+    # Crear figura para renderizar la tabla visual
+    fig, ax = plt.subplots(figsize=(10, len(stats_df) * 0.45 + 1.5))
+    ax.axis('tight')
+    ax.axis('off')
+
+    # Encabezados limpios para la imagen
+    headers = ["Mapa", "Algoritmo", "Media (Turnos)", "Desv. Estándar", "Mínimo", "Máximo"]
+    
+    # Dibujar la tabla
+    table = ax.table(
+        cellText=stats_df.values, 
+        colLabels=headers, 
+        cellLoc='center', 
+        loc='center'
+    )
+
+    # Estilo estético para la tabla
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1.2, 1.8)
+
+    # Formato de colores (Encabezados oscuros, filas alternadas)
+    for (row, col), cell in table.get_celld().items():
+        if row == 0:
+            cell.set_facecolor('#2B3A42')
+            cell.set_text_props(color='white', fontweight='bold')
+        else:
+            if row % 2 == 0:
+                cell.set_facecolor('#F0F4F8')
+            else:
+                cell.set_facecolor('#FFFFFF')
+
+    plt.title("Estadísticos Descriptivos", fontsize=12, fontweight="bold", pad=10)
+    
+    table_img_path = "tabla_estadisticas_turnos.png"
+    plt.savefig(table_img_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f" Guardado: {table_img_path}")
+    print("\nLos gráficos han sido generados exitosamente.")
 
 if __name__ == "__main__":
     generate_benchmark_charts()
